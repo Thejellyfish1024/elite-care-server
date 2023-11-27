@@ -25,11 +25,18 @@ const client = new MongoClient(uri, {
 
 const database = client.db('eliteCareDB');
 const userCollection = database.collection('users');
+const campsCollection = database.collection('medicalCamps');
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+
+    app.get('/popularCamps', async (req, res) => {
+      const result = await campsCollection.find().toArray()
+      res.send(result)
+    })
 
     app.post('/users', async (req, res) => {
       const user = req.body;
