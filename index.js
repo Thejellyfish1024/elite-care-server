@@ -26,6 +26,7 @@ const client = new MongoClient(uri, {
 const database = client.db('eliteCareDB');
 const userCollection = database.collection('users');
 const campsCollection = database.collection('medicalCamps');
+const participantCollection = database.collection('participants')
 
 async function run() {
   try {
@@ -55,6 +56,17 @@ async function run() {
       }
       const result = await userCollection.insertOne(user)
       res.send(result);
+    })
+
+    app.post('/registered-participants', async(req, res) =>{
+      const newEntry = req.body;
+      // const emailQuery = {email : newEntry?.email};
+      // const campIdQuery = {campId : newEntry?.campId};
+      // const isEmail = await participantCollection.findOne(emailQuery);
+      // const isCampId = await participantCollection.findOne(campIdQuery);
+      const result = await participantCollection.insertOne(newEntry);
+      res.send(result);
+      
     })
 
 
