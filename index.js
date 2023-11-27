@@ -47,6 +47,20 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/registration-stat/:id', async(req, res) =>{
+      const campId = req.params?.id;
+      const query = {campId : campId};
+      const registrations = await participantCollection.find(query).toArray();
+      const totalRegistration = registrations?.length;
+      res.send({totalRegistration : totalRegistration});
+    })
+
+    app.post('/medical-camps', async(req, res) =>{
+      const newCamp = req.body;
+      const result = await campsCollection.insertOne(newCamp);
+      res.send(result)
+    })
+
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user?.email };
