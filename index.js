@@ -68,6 +68,17 @@ async function run() {
       res.send(result);
     })
 
+    app.put('/users/:email', async(req,res) =>{
+      const email = req.params.email;
+      const updatedProfile = {
+        $set : req.body
+      }
+      const filter = {email : email};
+      const options = {upsert: true};
+      const result = await userCollection.updateOne(filter, updatedProfile, options);
+      res.send(result)
+    })
+
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user?.email };
