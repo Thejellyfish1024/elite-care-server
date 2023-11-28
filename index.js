@@ -183,6 +183,16 @@ async function run() {
 
     })
 
+    app.patch('/registered-participants/:id',verifyToken,verifyOrganizer, async(req,res) =>{
+      const id = req.params.id;
+      const filter = {_id : new ObjectId(id)}
+      const updatedStatus = {
+        $set : {status : 'confirmed'}
+      }
+      const result = await participantCollection.updateOne(filter, updatedStatus);
+      res.send(result)
+    })
+
     app.get('/registered-participants/:organizerEmail', verifyToken,verifyOrganizer,async (req,res) =>{
       const organizerEmail = req?.params.organizerEmail;
       const query = {organizerEmail : organizerEmail};
