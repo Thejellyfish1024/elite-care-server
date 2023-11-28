@@ -45,7 +45,7 @@ async function run() {
     })
 
     const verifyToken = (req, res, next) => {
-      console.log('hitting');
+      // console.log('hitting');
       if (!req.headers?.authorization) {
         console.log('authorization error');
         return res.status(401).send({ message: 'unauthorized access' })
@@ -73,7 +73,7 @@ async function run() {
 
     app.get('/users/organizer/:email',verifyToken, async (req, res) => {
       const email = req.params.email;
-      console.log('decoded', req?.decoded?.email);
+      // console.log('decoded', req?.decoded?.email);
       if (email !== req?.decoded?.email) {
         return res.status(403).send({ message: 'forbidden access' })
       }
@@ -143,6 +143,7 @@ async function run() {
     })
 
     app.get('/users/:email', verifyToken, async (req, res) => {
+      // console.log('aisi');
       const email = req.params.email;
       const query = { email: email }
       const result = await userCollection.findOne(query);
@@ -180,6 +181,13 @@ async function run() {
       const result = await participantCollection.insertOne(newEntry);
       res.send(result);
 
+    })
+
+    app.get('/registered-participants/:organizerEmail', verifyToken,verifyOrganizer,async (req,res) =>{
+      const organizerEmail = req?.params.organizerEmail;
+      const query = {organizerEmail : organizerEmail};
+      const result = await participantCollection.find(query).toArray()
+      res.send(result)
     })
 
 
