@@ -61,6 +61,13 @@ async function run() {
       res.send(result)
     })
 
+    app.delete('/medical-camps/:id', async(req,res) =>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await campsCollection.deleteOne(query)
+      res.send(result)
+    })
+
     app.get('/medical-camps/:organizerEmail', async(req,res) =>{
       const organizerEmail = req.params.organizerEmail;
       const query = {organizerEmail : organizerEmail}
