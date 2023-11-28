@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken')
 const app = express()
 const port = process.env.port || 5000
 
@@ -33,6 +34,61 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    // authentication
+
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '1h'
+      });
+      res.send({ token })
+    })
+
+    const verifyToken = (req, res, next) => {
+      console.log('hitting');
+      if (!req.headers?.authorization) {
+        console.log('authorization error');
+        return res.status(401).send({ message: 'unauthorized access' })
+      }
+      const token = req.headers.authorization.split(' ')[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
+      })
+    }
+
+    const verifyOrganizer = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await userCollection.findOne(query)
+      const isOrganizer = user?.role === 'organizer';
+      if (!isOrganizer) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+      next();
+    }
+
+    app.get('/users/organizer/:email',verifyToken, async (req, res) => {
+      const email = req.params.email;
+      console.log('decoded', req?.decoded?.email);
+      if (email !== req?.decoded?.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+      const query = { email: email }
+      const user = await userCollection.findOne(query)
+      let organizer = false;
+      if (user) {
+        organizer = user?.role === 'organizer'
+      }
+      // console.log('organizer', organizer);
+      res.send({ organizer })
+    })
+
+    // 
+
 
     app.get('/popularCamps', async (req, res) => {
       const result = await campsCollection.find().toArray()
@@ -41,65 +97,65 @@ async function run() {
     app.get('/camp-details/:id', async (req, res) => {
       const id = req.params.id;
       const query = {
-        _id : new ObjectId(id)
+        _id: new ObjectId(id)
       }
       const result = await campsCollection.findOne(query)
       res.send(result)
     })
 
-    app.get('/registration-stat/:id', async(req, res) =>{
+    app.get('/registration-stat/:id', async (req, res) => {
       const campId = req.params?.id;
-      const query = {campId : campId};
+      const query = { campId: campId };
       const registrations = await participantCollection.find(query).toArray();
       const totalRegistration = registrations?.length;
-      res.send({totalRegistration : totalRegistration});
+      res.send({ totalRegistration: totalRegistration });
     })
 
-    app.post('/medical-camps', async(req, res) =>{
+    app.post('/medical-camps', verifyToken, verifyOrganizer, async (req, res) => {
       const newCamp = req.body;
       const result = await campsCollection.insertOne(newCamp);
       res.send(result)
     })
 
 
-    app.delete('/medical-camps/:id', async(req,res) =>{
+    app.delete('/medical-camps/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id : new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await campsCollection.deleteOne(query)
       res.send(result)
     })
 
-    app.get('/medical-camps/:organizerEmail', async(req,res) =>{
+    app.get('/medical-camps/:organizerEmail', verifyToken, verifyOrganizer, async (req, res) => {
       const organizerEmail = req.params.organizerEmail;
-      const query = {organizerEmail : organizerEmail}
+      const query = { organizerEmail: organizerEmail }
       const result = await campsCollection.find(query).toArray()
       res.send(result)
     })
 
-    app.patch('/medical-camps/:id', async(req,res) =>{
+    app.patch('/medical-camps/:id', async (req, res) => {
       const id = req.params.id;
       const updatedCamp = {
-        $set : req.body
+        $set: req.body
       }
-      const filter = {_id : new ObjectId(id)};
+      const filter = { _id: new ObjectId(id) };
       const result = await campsCollection.updateOne(filter, updatedCamp);
       res.send(result)
     })
 
-    app.get('/users/:email', async(req,res) =>{
+    app.get('/users/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
-      const query = {email : email}
+      const query = { email: email }
       const result = await userCollection.findOne(query);
       res.send(result);
     })
 
-    app.put('/users/:email', async(req,res) =>{
+    app.put('/users/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       const updatedProfile = {
-        $set : req.body
+        $set: req.body
       }
-      const filter = {email : email};
-      const options = {upsert: true};
+      const filter = { email: email };
+      const options = { upsert: true };
       const result = await userCollection.updateOne(filter, updatedProfile, options);
       res.send(result)
     })
@@ -115,7 +171,7 @@ async function run() {
       res.send(result);
     })
 
-    app.post('/registered-participants', async(req, res) =>{
+    app.post('/registered-participants', async (req, res) => {
       const newEntry = req.body;
       // const emailQuery = {email : newEntry?.email};
       // const campIdQuery = {campId : newEntry?.campId};
@@ -123,7 +179,7 @@ async function run() {
       // const isCampId = await participantCollection.findOne(campIdQuery);
       const result = await participantCollection.insertOne(newEntry);
       res.send(result);
-      
+
     })
 
 
