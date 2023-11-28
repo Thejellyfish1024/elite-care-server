@@ -61,6 +61,13 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/medical-camps/:organizerEmail', async(req,res) =>{
+      const organizerEmail = req.params.organizerEmail;
+      const query = {organizerEmail : organizerEmail}
+      const result = await campsCollection.find(query).toArray()
+      res.send(result)
+    })
+
     app.get('/users/:email', async(req,res) =>{
       const email = req.params.email;
       const query = {email : email}
