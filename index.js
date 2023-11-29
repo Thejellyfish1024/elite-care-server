@@ -28,6 +28,7 @@ const database = client.db('eliteCareDB');
 const userCollection = database.collection('users');
 const campsCollection = database.collection('medicalCamps');
 const participantCollection = database.collection('participants')
+const upcomingParticipantCollection = database.collection('upcomingParticipants')
 const upcomingCampsCollection = database.collection('upcomingCamps')
 const interestedProfessionalCollection = database.collection('interestedProfessionals')
 
@@ -122,6 +123,13 @@ async function run() {
       const totalRegistration = registrations?.length;
       res.send({ totalRegistration: totalRegistration });
     })
+    app.get('/upcoming-registration-stat/:id', async (req, res) => {
+      const campId = req.params?.id;
+      const query = { campId: campId };
+      const registrations = await upcomingParticipantCollection.find(query).toArray();
+      const totalUpcomingRegistration = registrations?.length;
+      res.send({ totalUpcomingRegistration: totalUpcomingRegistration });
+    })
 
     app.get('/professional-stat/:id', async (req, res) => {
       const campId = req.params?.id;
@@ -150,11 +158,25 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/upcoming-camps/:organizerEmail',verifyToken,verifyOrganizer, async(req,res) =>{
+      const organizerEmail = req.params.organizerEmail;
+      const query = {organizerEmail : organizerEmail}
+      const result = await upcomingCampsCollection.find(query).toArray()
+      res.send(result)
+    })
+
 
     app.delete('/medical-camps/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await campsCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    app.delete('/upcoming-camps/:id',verifyToken,verifyOrganizer, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await upcomingCampsCollection.deleteOne(query)
       res.send(result)
     })
 
@@ -207,11 +229,13 @@ async function run() {
 
     app.post('/registered-participants',verifyToken, async (req, res) => {
       const newEntry = req.body;
-      // const emailQuery = {email : newEntry?.email};
-      // const campIdQuery = {campId : newEntry?.campId};
-      // const isEmail = await participantCollection.findOne(emailQuery);
-      // const isCampId = await participantCollection.findOne(campIdQuery);
       const result = await participantCollection.insertOne(newEntry);
+      res.send(result);
+
+    })
+    app.post('/upcoming-registered-participants',verifyToken, async (req, res) => {
+      const newEntry = req.body;
+      const result = await upcomingParticipantCollection.insertOne(newEntry);
       res.send(result);
 
     })
@@ -236,6 +260,13 @@ async function run() {
       const organizerEmail = req?.params.organizerEmail;
       const query = {organizerEmail : organizerEmail};
       const result = await participantCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.get('/upcoming-registered-participants/:organizerEmail', verifyToken,verifyOrganizer,async (req,res) =>{
+      const organizerEmail = req?.params.organizerEmail;
+      const query = {organizerEmail : organizerEmail};
+      const result = await upcomingParticipantCollection.find(query).toArray()
       res.send(result)
     })
 
