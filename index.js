@@ -197,11 +197,32 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/medical-camp/:id', async(req,res) =>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await campsCollection.findOne(query)
+      res.send(result)
+    })
+
     app.get('/users/:email', verifyToken, async (req, res) => {
       // console.log('aisi');
       const email = req.params.email;
       const query = { email: email }
       const result = await userCollection.findOne(query);
+      res.send(result);
+    })
+
+    app.get('/registered-camps/:email', verifyToken, async(req,res) =>{
+      const email = req.params.email;
+      const query = { email : email};
+      const result = await participantCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.delete('/registered-camp/:id', async(req,res) =>{
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+      const result = await participantCollection.deleteOne(query);
       res.send(result);
     })
 
@@ -231,8 +252,9 @@ async function run() {
       const newEntry = req.body;
       const result = await participantCollection.insertOne(newEntry);
       res.send(result);
-
     })
+
+
     app.post('/upcoming-registered-participants',verifyToken, async (req, res) => {
       const newEntry = req.body;
       const result = await upcomingParticipantCollection.insertOne(newEntry);
