@@ -29,6 +29,7 @@ const userCollection = database.collection('users');
 const campsCollection = database.collection('medicalCamps');
 const participantCollection = database.collection('participants')
 const upcomingCampsCollection = database.collection('upcomingCamps')
+const interestedProfessionalCollection = database.collection('interestedProfessionals')
 
 async function run() {
   try {
@@ -95,12 +96,22 @@ async function run() {
       const result = await campsCollection.find().toArray()
       res.send(result)
     })
+
     app.get('/camp-details/:id', async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id)
       }
       const result = await campsCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.get('/upcoming-camp-details/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        _id: new ObjectId(id)
+      }
+      const result = await upcomingCampsCollection.findOne(query)
       res.send(result)
     })
 
@@ -111,6 +122,15 @@ async function run() {
       const totalRegistration = registrations?.length;
       res.send({ totalRegistration: totalRegistration });
     })
+
+    app.get('/professional-stat/:id', async (req, res) => {
+      const campId = req.params?.id;
+      const query = { campId: campId };
+      const professionals = await interestedProfessionalCollection.find(query).toArray();
+      const totalProfessionals = professionals?.length;
+      res.send({ totalProfessionals: totalProfessionals });
+    })
+
 
     app.post('/medical-camps', verifyToken, verifyOrganizer, async (req, res) => {
       const newCamp = req.body;
@@ -185,7 +205,7 @@ async function run() {
       res.send(result);
     })
 
-    app.post('/registered-participants', async (req, res) => {
+    app.post('/registered-participants',verifyToken, async (req, res) => {
       const newEntry = req.body;
       // const emailQuery = {email : newEntry?.email};
       // const campIdQuery = {campId : newEntry?.campId};
@@ -194,6 +214,12 @@ async function run() {
       const result = await participantCollection.insertOne(newEntry);
       res.send(result);
 
+    })
+
+    app.post('/interested-professionals',verifyToken, async(req,res) =>{
+      const professionalInfo = req.body;
+      const result = await interestedProfessionalCollection.insertOne(professionalInfo);
+      res.send(result);
     })
 
     app.patch('/registered-participants/:id',verifyToken,verifyOrganizer, async(req,res) =>{
