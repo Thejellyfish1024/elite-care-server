@@ -118,10 +118,15 @@ async function run() {
       res.send(result)
     })
 
-    
+
     app.post('/upcoming-camps', verifyToken, verifyOrganizer, async (req, res) => {
       const newCamp = req.body;
       const result = await upcomingCampsCollection.insertOne(newCamp);
+      res.send(result)
+    })
+
+    app.get('/upcoming-camps', async(req,res) =>{
+      const result = await upcomingCampsCollection.find().toArray()
       res.send(result)
     })
 
