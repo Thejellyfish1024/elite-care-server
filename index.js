@@ -28,6 +28,7 @@ const database = client.db('eliteCareDB');
 const userCollection = database.collection('users');
 const campsCollection = database.collection('medicalCamps');
 const participantCollection = database.collection('participants')
+const upcomingCampsCollection = database.collection('upcomingCamps')
 
 async function run() {
   try {
@@ -114,6 +115,13 @@ async function run() {
     app.post('/medical-camps', verifyToken, verifyOrganizer, async (req, res) => {
       const newCamp = req.body;
       const result = await campsCollection.insertOne(newCamp);
+      res.send(result)
+    })
+
+    
+    app.post('/upcoming-camps', verifyToken, verifyOrganizer, async (req, res) => {
+      const newCamp = req.body;
+      const result = await upcomingCampsCollection.insertOne(newCamp);
       res.send(result)
     })
 
