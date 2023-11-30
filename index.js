@@ -4,6 +4,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken')
 const app = express()
 const port = process.env.port || 5000
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 
 // middlewares
@@ -31,6 +32,7 @@ const participantCollection = database.collection('participants')
 const upcomingParticipantCollection = database.collection('upcomingParticipants')
 const upcomingCampsCollection = database.collection('upcomingCamps')
 const interestedProfessionalCollection = database.collection('interestedProfessionals')
+const paymentCollection = database.collection('payments')
 
 async function run() {
   try {
@@ -88,6 +90,37 @@ async function run() {
       }
       // console.log('organizer', organizer);
       res.send({ organizer })
+    })
+
+    // 
+
+    // payments
+
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      })
+      res.send({ clientSecret: paymentIntent.client_secret })
+    })
+
+
+    app.post('/payments/:id', async (req, res) => {
+      const payment = req.body;
+      const id = req.params.id;
+      const paymentResult = await paymentCollection.insertOne(payment)
+
+      const query = {_id : new ObjectId(id)}
+      const updatedPayment = {
+        $set : {payment : 'paid'}
+      }
+      const updateResult = await participantCollection.updateOne(query,updatedPayment)
+  
+      res.send({paymentResult, updateResult})
+
     })
 
     // 
@@ -226,6 +259,8 @@ async function run() {
       res.send(result);
     })
 
+  
+
     app.put('/users/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       const updatedProfile = {
@@ -282,6 +317,13 @@ async function run() {
       const organizerEmail = req?.params.organizerEmail;
       const query = {organizerEmail : organizerEmail};
       const result = await participantCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.get('/registered-participant/:id', verifyToken,async (req,res) =>{
+      const id = req?.params.id;
+      const query = {_id : new ObjectId(id)};
+      const result = await participantCollection.findOne(query)
       res.send(result)
     })
 
