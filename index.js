@@ -28,6 +28,7 @@ const client = new MongoClient(uri, {
 const database = client.db('eliteCareDB');
 const userCollection = database.collection('users');
 const campsCollection = database.collection('medicalCamps');
+const popularCollection = database.collection('popularCamps');
 const participantCollection = database.collection('participants')
 const upcomingParticipantCollection = database.collection('upcomingParticipants')
 const upcomingCampsCollection = database.collection('upcomingCamps')
@@ -38,7 +39,7 @@ const reviewCollection = database.collection('reviews')
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     // authentication
 
@@ -92,6 +93,20 @@ async function run() {
       // console.log('organizer', organizer);
       res.send({ organizer })
     })
+    app.get('/users/professional/:email',verifyToken, async (req, res) => {
+      const email = req.params.email;
+      // console.log('decoded', req?.decoded?.email);
+      if (email !== req?.decoded?.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+      const query = { email: email }
+      const user = await userCollection.findOne(query)
+      let professional = false;
+      if (user) {
+        professional = user?.role === 'professional'
+      }
+      res.send({ professional })
+    })
 
     // 
 
@@ -141,8 +156,8 @@ async function run() {
     // 
 
 
-    app.get('/popularCamps', async (req, res) => {
-      const result = await campsCollection.find().toArray()
+    app.get('/popular-camps', async (req, res) => {
+      const result = await popularCollection.find().toArray()
       res.send(result)
     })
 
@@ -250,6 +265,11 @@ async function run() {
       res.send(result);
     })
 
+    app.get('/reviews', async(req,res) =>{
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
+    })
+
     app.patch('/medical-camps/:id',verifyToken,verifyOrganizer, async (req, res) => {
       const id = req.params.id;
       const updatedCamp = {
@@ -267,7 +287,12 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/users/:email', verifyToken, async (req, res) => {
+    app.get('/available-camps', async(req,res) =>{
+      const result = await campsCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.get('/users/:email',  async (req, res) => {
       // console.log('aisi');
       const email = req.params.email;
       const query = { email: email }
@@ -371,8 +396,8 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
