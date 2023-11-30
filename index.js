@@ -33,6 +33,7 @@ const upcomingParticipantCollection = database.collection('upcomingParticipants'
 const upcomingCampsCollection = database.collection('upcomingCamps')
 const interestedProfessionalCollection = database.collection('interestedProfessionals')
 const paymentCollection = database.collection('payments')
+const reviewCollection = database.collection('reviews')
 
 async function run() {
   try {
@@ -123,6 +124,13 @@ async function run() {
 
     })
 
+    app.get('/payments/:email',verifyToken, async(req,res) =>{
+      const email = req.params.email;
+      const query = { email : email }
+      const result = await paymentCollection.find(query).toArray()
+      res.send(result);
+    })
+
     app.get('/payment-history/:email', async(req,res) =>{
       const email = req.params.email;
       const query = {email : email}
@@ -208,7 +216,7 @@ async function run() {
     })
 
 
-    app.delete('/medical-camps/:id', async (req, res) => {
+    app.delete('/medical-camps/:id',verifyToken,verifyOrganizer, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await campsCollection.deleteOne(query)
@@ -222,14 +230,27 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/medical-camps/:organizerEmail', verifyToken, verifyOrganizer, async (req, res) => {
+    app.get('/medical-camps/:organizerEmail', async (req, res) => {
       const organizerEmail = req.params.organizerEmail;
       const query = { organizerEmail: organizerEmail }
       const result = await campsCollection.find(query).toArray()
       res.send(result)
     })
 
-    app.patch('/medical-camps/:id', async (req, res) => {
+    app.get('/medical-camp/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id : new ObjectId(id) }
+      const result = await campsCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.post('/reviews', async(req,res) =>{
+      const newReview = req.body;
+      const result = await reviewCollection.insertOne(newReview);
+      res.send(result);
+    })
+
+    app.patch('/medical-camps/:id',verifyToken,verifyOrganizer, async (req, res) => {
       const id = req.params.id;
       const updatedCamp = {
         $set: req.body
